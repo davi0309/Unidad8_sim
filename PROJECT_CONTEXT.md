@@ -186,6 +186,10 @@ de las películas/juegos, actores ni copia de afiches:
   tapaban los recuerdos del patio).
 - Decoraciones vivas (pájaros, tren, nubes, cortinas…) no se pueden seleccionar ni sirven de apoyo.
 - Las imágenes se dibujan en `renderingGroupId = 1`: la curva de la cinta nunca tapa los bordes del fotograma.
+- Big Bang: el estallido (blanco al centro, naranja afuera) primero se agranda (1.6 s), luego baja su alpha poco
+  a poco hasta 0 (blanco 6.5 s, naranja 7.5 s) y tras 1.6 s de oscuridad empieza la infancia y aparecen los
+  objetos. El alpha se aplica también al emisivo para que el resplandor del glow baje al mismo ritmo
+  (antes desaparecía de golpe al final). Tiempos en `T` de `OriginStage.ts`.
 - Si falta la canción de un escenario, la anterior se desvanece (silencio) en vez de seguir sonando.
 - Enums no permitidos (`erasableSyntaxOnly` de TS 7): objetos `as const`; sin propiedades en parámetros de constructor.
 - Atajos de desarrollo: `?etapa=infancia`, `?etapa=cinta`, `?etapa=diorama`. Calidad baja: `?calidad=baja`.

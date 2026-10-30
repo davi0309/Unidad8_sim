@@ -26,12 +26,21 @@ const T = {
   gatherDuration: 8,
   implosion: 10.8,
   explosion: 11.6,
-  /** Después de la explosión todo se apaga en capas: primero el núcleo, luego el halo y la luz. */
-  coreFade: 6, // el núcleo blanco
-  haloFade: 9, // el resplandor cálido que lo rodea
+  /** El estallido primero se agranda y después se apaga poco a poco (blanco del centro y naranja de afuera). */
+  growDuration: 1.6, // tiempo que tarda en llegar a su tamaño máximo
+  fadeStart: 1.8, // s después de la explosión en que empieza a bajar el alpha
+  coreFade: 6.5, // el blanco del centro
+  haloDelay: 0.5, // el naranja empieza a apagarse un poco después del blanco
+  haloFade: 7.5, // el naranja de afuera
   lightFade: 9.5, // la luz que ilumina las partículas
-  end: 22, // la etapa termina cuando ya no queda nada encendido
+  /** Pausa en oscuridad, con el estallido ya en 0, antes de que aparezcan los objetos de la infancia. */
+  pauseAfter: 1.6,
 };
+/** Fin de la etapa: cuando el estallido llegó a 0 y pasó la pausa. */
+const STAGE_END = T.explosion + T.fadeStart + Math.max(T.coreFade, T.haloDelay + T.haloFade) + T.pauseAfter;
+
+const CORE_COLOR = new Color3(1, 0.97, 0.9);
+const HALO_COLOR = new Color3(1, 0.62, 0.4);
 
 const CAMERA_START_Z = -14;
 const CAMERA_CLOSE_Z = -10.5;
@@ -108,14 +117,15 @@ export class OriginStage implements ExperienceStage {
       this.shakeCamera();
     }, T.explosion);
     tl.set(core, { flicker: 0 }, T.explosion);
+    // a) Se agranda: el blanco del centro y el naranja de afuera llegan a su tamaño máximo
     tl.to(core, { scale: 9, duration: 0.6, ease: 'expo.out' }, T.explosion);
-    // El núcleo se sostiene un instante y luego se apaga despacio, encogiéndose un poco
-    tl.to(core, { alpha: 0, duration: T.coreFade, ease: 'sine.inOut' }, T.explosion + 0.5);
-    tl.to(core, { scale: 5, duration: T.coreFade + 0.5, ease: 'sine.inOut' }, T.explosion + 0.6);
-    // El halo se expande lentamente mientras se desvanece: queda como un recuerdo de la luz
     tl.to(core, { haloAlpha: 0.75, duration: 0.6, ease: 'power2.out' }, T.explosion);
-    tl.to(core, { haloScale: 4, duration: T.haloFade, ease: 'sine.out' }, T.explosion);
-    tl.to(core, { haloAlpha: 0, duration: T.haloFade - 0.8, ease: 'sine.inOut' }, T.explosion + 0.8);
+    tl.to(core, { haloScale: 4.2, duration: T.growDuration, ease: 'sine.out' }, T.explosion);
+    // b) Ya grande, baja el alpha poco a poco hasta 0 (casi sin cambiar de tamaño)
+    const fade = T.explosion + T.fadeStart;
+    tl.to(core, { alpha: 0, duration: T.coreFade, ease: 'sine.inOut' }, fade);
+    tl.to(core, { scale: 8, duration: T.coreFade, ease: 'sine.inOut' }, fade);
+    tl.to(core, { haloAlpha: 0, duration: T.haloFade, ease: 'sine.inOut' }, fade + T.haloDelay);
     tl.fromTo(
       light,
       { intensity: 7 },
@@ -125,7 +135,8 @@ export class OriginStage implements ExperienceStage {
     tl.to(cam, { z: CAMERA_START_Z, duration: 6, ease: 'power2.out' }, T.explosion);
 
     // 5. Dispersión: el universo se expande y se calma
-    tl.to({}, { duration: 0.1 }, T.end - 0.1);
+    // c) Con el estallido ya en 0 y una pausa, termina la etapa y aparecen los objetos
+    tl.to({}, { duration: 0.1 }, STAGE_END - 0.1);
   }
 
   private buildCore(): void {
@@ -135,7 +146,7 @@ export class OriginStage implements ExperienceStage {
     const makeSprite = (name: string, color: Color3): Mesh => {
       const mat = new StandardMaterial(`${name}-mat`, this.scene);
       mat.disableLighting = true;
-      mat.emissiveColor = color;
+      mat.emissiveColor = color.clone();
       mat.opacityTexture = tex;
       mat.alphaMode = Constants.ALPHA_ADD;
       mat.fogEnabled = false;
@@ -147,8 +158,8 @@ export class OriginStage implements ExperienceStage {
       return plane;
     };
 
-    this.core = makeSprite('origin-core', new Color3(1, 0.97, 0.9));
-    this.halo = makeSprite('origin-halo', new Color3(1, 0.62, 0.4));
+    this.core = makeSprite('origin-core', CORE_COLOR);
+    this.halo = makeSprite('origin-halo', HALO_COLOR);
 
     const light = new PointLight('origin-light', Vector3.Zero(), this.scene);
     light.diffuse = new Color3(1, 0.8, 0.6);
@@ -176,9 +187,11 @@ export class OriginStage implements ExperienceStage {
     const flicker = s.flicker > 0 ? 1 - s.flicker * 0.5 * Math.abs(Math.sin(this.time * 38)) : 1;
     const coreSize = s.scale * pulse * flicker;
     this.core.scaling.setAll(Math.max(coreSize, 0.0001));
-    this.core.visibility = s.alpha;
     this.halo.scaling.setAll(Math.max(s.scale * pulse * s.haloScale, 0.0001));
-    this.halo.visibility = s.haloAlpha;
+    // El alpha se aplica al brillo (emisivo) y a la transparencia: así el resplandor del glow
+    // baja al mismo ritmo que el sprite y no desaparece de golpe al final
+    setSpriteAlpha(this.core, CORE_COLOR, s.alpha);
+    setSpriteAlpha(this.halo, HALO_COLOR, s.haloAlpha);
   }
 
   dispose(): void {
@@ -191,4 +204,11 @@ export class OriginStage implements ExperienceStage {
     this.core = this.halo = null;
     this.light = null;
   }
+}
+
+function setSpriteAlpha(mesh: Mesh, color: Color3, alpha: number): void {
+  const a = Math.min(Math.max(alpha, 0), 1);
+  (mesh.material as StandardMaterial).emissiveColor.copyFromFloats(color.r * a, color.g * a, color.b * a);
+  mesh.visibility = Math.sqrt(a);
+  mesh.isVisible = a > 0.001;
 }
