@@ -137,8 +137,13 @@ Prueba unitaria (5 perfiles): La La Land+Interstellar → Habitación · Nemo �
   cama, escritorio con lámpara, repisa con libros, alfombra, estrellas en la pared, móvil.
 - **Bosque de los recuerdos:** claro circular, árboles alrededor (frente libre), sendero de piedras hacia el
   espectador, tocón, roca con musgo, hongos, raíces, niebla baja.
-- **Isla suspendida:** isla flotante con roca debajo, montañas nevadas, lago, cascada, muelle, árboles, flores,
-  islotes flotantes y un mar lejano que da el horizonte.
+- **Isla suspendida (rediseñada):** colores vivos (pasto verde intenso, roca cálida, mar turquesa, cielo celeste).
+  Tres montañas violetas con falda verde y nieve **al costado izquierdo** (dejan ver el centro), con un saliente
+  y terrazas de té. Aldea de **3 casitas chinas** (techos de jade, rojo y azul con aleros levantados, columnas
+  rojas, ventanas redondas encendidas y farolitos rojos que se mecen; una de dos pisos) unidas por un sendero
+  de piedras. Lago con orilla de arena, nenúfares y peces koi que saltan; cascada; muelle; cerezos en flor,
+  árboles redondos, bambú, flores de colores. Islotes: uno con pabellón chino, otro con un cerezo.
+  Vida: pétalos de cerezo al viento, cometa roja con cola, gaviotas, nubes, velero en el mar.
 
 ### Vida en los dioramas (Fase 5)
 - **Castillo:** banderines ondeando, ventanas que titilan, nubecitas que orbitan, 3 pájaros en círculo,

@@ -32,10 +32,10 @@ export const DIORAMA_TEMPLATES: Record<TemplateId, DioramaDefinition> = {
   isla: {
     id: 'isla',
     name: 'Isla suspendida',
-    sky: '#9fb2e0',
-    fogDensity: 0.012,
-    hemi: { sky: '#e4ecff', ground: '#7a8aa0', intensity: 0.75 },
-    key: { color: '#fff0d8', intensity: 0.95, direction: [-0.5, -1, -0.3] },
+    sky: '#8cc6ff',
+    fogDensity: 0.009,
+    hemi: { sky: '#f2f8ff', ground: '#7aa080', intensity: 0.85 },
+    key: { color: '#fff2d4', intensity: 1.05, direction: [-0.5, -1, -0.3] },
     ambient: ['#ffffff', '#d8f0ff', '#fff4e0'],
   },
 };

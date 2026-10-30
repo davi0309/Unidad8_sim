@@ -32,11 +32,11 @@ export const ANCHORS: Record<TemplateId, Anchor[]> = {
     { id: 'rama', position: [3.1, 3.3, 2.3], tags: ['alto', 'musica', 'suspendido'], priority: 5, float: true },
   ],
   isla: [
-    { id: 'pradera', position: [0.4, 0.32, -0.2], tags: ['centro', 'abierto', 'suelo'], priority: 10 },
-    { id: 'orilla', position: [3.1, 0.32, 2.4], tags: ['suelo', 'agua', 'movimiento'], priority: 8 },
+    { id: 'pradera', position: [-0.4, 0.32, -0.6], tags: ['centro', 'abierto', 'suelo'], priority: 10 },
+    { id: 'orilla', position: [3.6, 0.32, -0.9], tags: ['suelo', 'agua', 'movimiento'], priority: 8 },
     { id: 'muelle', position: [1.2, 0.5, 3.0], tags: ['mesa', 'agua', 'juego'], priority: 7 },
-    { id: 'saliente', position: [-1.5, 2.25, -0.6], tags: ['alto', 'estante', 'musica'], priority: 6 },
-    { id: 'borde', position: [-3.9, 0.32, 2.0], tags: ['suave', 'descanso'], priority: 6 },
+    { id: 'saliente', position: [-2.85, 2.05, -0.8], tags: ['alto', 'estante', 'musica'], priority: 6 },
+    { id: 'borde', position: [-0.6, 0.32, 2.0], tags: ['suave', 'descanso'], priority: 6 },
     { id: 'islote', position: [6.6, 2.6, -2.0], tags: ['suspendido', 'alto'], priority: 5, float: true },
   ],
 };
@@ -492,45 +492,180 @@ const isla: Builder = (k) => {
   const details = k.group('isla-detalles');
   const floaters = [];
 
-  k.cyl(island, { top: 11.4, bottom: 1.2, h: 6.5, tess: 9 }, k.mat('#7a6a5a'), [0, -3.1, 0], undefined, { flat: true });
-  k.cyl(island, { top: 11.6, bottom: 11.4, h: 0.5, tess: 9 }, k.mat('#6ab06a'), [0, 0.05, 0], undefined, { flat: true, shadow: false });
+  // Zonas ocupadas (montañas, lago, casas): las flores y hierbas no se ponen encima
+  const busy: [number, number, number][] = [
+    [-3.6, 0.2, 1.9], [-2.8, 2.4, 1.5], [-3.4, -2.6, 1.1], [-1.7, 1.3, 0.8], [2.2, 1.0, 2.0],
+    [0.0, 4.3, 1.0], [3.3, -3.0, 0.9], [-2.2, -3.6, 0.8], [1.2, 2.6, 0.8],
+  ];
+  const free = (x: number, z: number) => busy.every(([bx, bz, r]) => Math.hypot(x - bx, z - bz) > r);
+
+  // Roca de la isla: tonos cálidos y vivos
+  k.cyl(island, { top: 11.4, bottom: 1.2, h: 6.5, tess: 9 }, k.mat('#c07a4a'), [0, -3.1, 0], undefined, { flat: true });
+  k.cyl(island, { top: 11.5, bottom: 9.6, h: 1.2, tess: 9 }, k.mat('#a0603a'), [0, -0.45, 0], undefined, { flat: true });
+  k.cyl(island, { top: 11.6, bottom: 11.4, h: 0.5, tess: 9 }, k.mat('#5cc85a'), [0, 0.05, 0], undefined, { flat: true, shadow: false });
   for (let i = 0; i < 6; i++) {
     const a = k.range(0, Math.PI * 2);
-    k.cyl(island, { top: k.range(1.4, 2.2), bottom: 0.2, h: k.range(1.5, 3), tess: 6 }, k.mat('#6a5a4c'), [Math.cos(a) * 4.5, -1.8, Math.sin(a) * 4.5], undefined, { flat: true });
+    k.cyl(island, { top: k.range(1.4, 2.2), bottom: 0.2, h: k.range(1.5, 3), tess: 6 }, k.mat(k.pick(['#b06a40', '#8a5034'])), [Math.cos(a) * 4.5, -1.8, Math.sin(a) * 4.5], undefined, { flat: true });
   }
   // Mar lejano: da el horizonte
-  const sea = k.cyl(island, { top: 160, bottom: 160, h: 0.1, tess: 48 }, k.mat('#6ab4d0', { gloss: 0.6 }), [0, -14, 0], undefined, { shadow: false });
+  const sea = k.cyl(island, { top: 160, bottom: 160, h: 0.1, tess: 48 }, k.mat('#3ec4e6', { gloss: 0.6 }), [0, -14, 0], undefined, { shadow: false });
   sea.receiveShadows = false;
   sea.isPickable = false;
 
-  // Montañas con nieve
-  k.cyl(relief, { top: 0, bottom: 4.6, h: 4.6, tess: 7 }, k.mat('#8a8aa0'), [-2.0, 2.5, -1.6], undefined, { flat: true });
-  k.cyl(relief, { top: 0, bottom: 1.6, h: 1.4, tess: 7 }, k.mat('#f4f6ff'), [-2.0, 4.15, -1.6], undefined, { flat: true });
-  k.cyl(relief, { top: 0, bottom: 3.2, h: 3.0, tess: 7 }, k.mat('#9a9ab2'), [-0.3, 1.7, -3.0], undefined, { flat: true });
-  k.cyl(relief, { top: 0, bottom: 1.0, h: 0.8, tess: 7 }, k.mat('#f4f6ff'), [-0.3, 2.85, -3.0], undefined, { flat: true });
-  k.box(relief, [1.2, 0.18, 0.9], k.mat('#7a7a92'), [-1.5, 2.1, -0.6], [0, 0.3, 0]);
-  // Lago y cascada
-  k.cyl(relief, { top: 3.8, bottom: 3.8, h: 0.08, tess: 24 }, k.mat('#4aa8d8', { gloss: 0.9, alpha: 0.92 }), [2.2, 0.33, 1.0], undefined, { shadow: false });
-  k.box(relief, [0.7, 4.5, 0.12], k.mat('#bfe8ff', { alpha: 0.55, emissive: 0.3 }), [4.4, -1.9, 2.6], [0, -0.5, 0], { shadow: false });
+  // ---- Montañas al costado: falda verde, cuerpo violeta y nieve ----
+  const mountain = (x: number, z: number, r: number, h: number, body: string) => {
+    const y0 = 0.3;
+    k.cyl(relief, { top: 0, bottom: r * 2, h, tess: 7 }, k.mat(body), [x, y0 + h / 2, z], undefined, { flat: true });
+    k.cyl(relief, { top: r * 2 * 0.62 + 0.06, bottom: r * 2 + 0.08, h: h * 0.38, tess: 7 }, k.mat('#46b45a'), [x, y0 + h * 0.19, z], undefined, { flat: true });
+    k.cyl(relief, { top: 0, bottom: r * 2 * 0.3 + 0.06, h: h * 0.3 + 0.04, tess: 7 }, k.mat('#f8faff'), [x, y0 + h * 0.85 + 0.02, z], undefined, { flat: true });
+  };
+  mountain(-3.6, 0.2, 1.8, 4.0, '#7a6ad8');
+  mountain(-2.8, 2.4, 1.4, 3.0, '#9a7ae8');
+  mountain(-3.4, -2.6, 1.0, 2.0, '#6a8ae0');
+  // Saliente de roca en la ladera (lugar para un recuerdo)
+  k.box(relief, [1.2, 0.18, 0.9], k.mat('#8a6ac0'), [-2.85, 1.9, -0.8], [0, -0.6, 0]);
+  // Terrazas de té al pie de las montañas
+  for (let i = 0; i < 3; i++) {
+    k.box(relief, [1.4 - i * 0.3, 0.12, 0.45], k.mat(i % 2 ? '#7ad84a' : '#5ac24a'), [-1.5 - i * 0.22, 0.38 + i * 0.12, 1.25 + i * 0.08], [0, 1.2, 0]);
+  }
 
-  // Muelle, árboles, flores
-  const wood = k.mat('#9a6a44');
+  // ---- Lago y cascada ----
+  k.cyl(relief, { top: 3.8, bottom: 3.8, h: 0.08, tess: 24 }, k.mat('#2fb4ec', { gloss: 0.9, alpha: 0.92 }), [2.2, 0.33, 1.0], undefined, { shadow: false });
+  k.cyl(relief, { top: 4.1, bottom: 4.1, h: 0.06, tess: 24 }, k.mat('#e8d8a8'), [2.2, 0.31, 1.0], undefined, { shadow: false });
+  k.box(relief, [0.7, 4.5, 0.12], k.mat('#bfe8ff', { alpha: 0.55, emissive: 0.3 }), [4.4, -1.9, 2.6], [0, -0.5, 0], { shadow: false });
+  // Nenúfares
+  for (const [x, z] of [[1.4, 0.4], [2.9, 1.8], [2.6, 0.1]] as const) {
+    k.cyl(relief, { top: 0.36, bottom: 0.36, h: 0.02, tess: 10 }, k.mat('#3aa84a'), [x, 0.38, z], undefined, { shadow: false });
+    k.sphere(relief, [0.12, 0.1, 0.12], k.mat('#ff8ac8', { emissive: 0.2 }), [x + 0.05, 0.42, z], { seg: 6, shadow: false });
+  }
+
+  // ---- Aldea: casitas chinas ----
+  const lanternMat = k.mat('#ff3a2a', { emissive: 0.95 });
+  const lanterns: TransformNode[] = [];
+  const house = (x: number, z: number, rotY: number, scale: number, roof: string, tiers: 1 | 2) => {
+    const g = k.group('casita', details, [x, 0.3, z]);
+    g.rotation.y = rotY;
+    g.scaling.setAll(scale);
+    const red = k.mat('#d8342a');
+    k.box(g, [1.7, 0.16, 1.4], k.mat('#d8cbb0'), [0, 0.08, 0]);
+    k.box(g, [0.5, 0.08, 0.3], k.mat('#c8b898'), [0, 0.04, -0.82]);
+    let y = 0.16;
+    for (let t = 0; t < tiers; t++) {
+      const w = t ? 0.8 : 1.2;
+      const d = t ? 0.62 : 0.9;
+      const hWall = t ? 0.5 : 0.7;
+      k.box(g, [w, hWall, d], k.mat('#fbe8c4'), [0, y + hWall / 2, 0]);
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+        k.cyl(g, { top: 0.09, bottom: 0.09, h: hWall + 0.02, tess: 8 }, red, [sx * (w / 2 + 0.02), y + hWall / 2, sz * (d / 2 + 0.02)]);
+      }
+      if (t === 0) {
+        k.box(g, [0.32, 0.46, 0.03], k.mat('#8a2a1a'), [0, y + 0.23, -d / 2 - 0.01]);
+        for (const sx of [-1, 1]) {
+          k.cyl(g, { top: 0.22, bottom: 0.22, h: 0.03, tess: 12 }, k.mat('#ffc85a', { emissive: 0.7 }), [sx * 0.38, y + 0.42, -d / 2 - 0.01], [Math.PI / 2, 0, 0], { shadow: false });
+        }
+      }
+      y += hWall;
+      // Techo a cuatro aguas con aleros levantados
+      const rw = w + 0.75;
+      const roofMesh = k.cyl(g, { top: 0.35, bottom: rw * Math.SQRT2, h: 0.42, tess: 4 }, k.mat(roof), [0, y + 0.2, 0], [0, Math.PI / 4, 0], { flat: true });
+      roofMesh.scaling.z = (d + 0.7) / rw;
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+        k.cyl(g, { top: 0, bottom: 0.1, h: 0.32, tess: 5 }, k.mat(roof), [sx * (rw / 2), y + 0.06, sz * ((d + 0.7) / 2)], [sz * 0.75, 0, -sx * 0.75], { shadow: false });
+      }
+      k.box(g, [w * 0.55, 0.08, 0.12], k.mat('#ffd24a'), [0, y + 0.43, 0]);
+      for (const sx of [-1, 1]) k.cyl(g, { top: 0, bottom: 0.08, h: 0.2, tess: 5 }, k.mat('#ffd24a'), [sx * w * 0.3, y + 0.52, 0], [0, 0, -sx * 0.5], { shadow: false });
+      y += 0.42;
+    }
+    // Farolitos rojos que cuelgan del alero
+    for (const sx of [-1, 1]) {
+      const pivot = k.group('farolito', g, [sx * 0.62, 0.86, -0.82]);
+      k.cyl(pivot, { top: 0.01, bottom: 0.01, h: 0.14, tess: 4 }, k.mat('#3a2a1a'), [0, -0.07, 0], undefined, { shadow: false });
+      k.sphere(pivot, [0.2, 0.26, 0.2], lanternMat, [0, -0.26, 0], { seg: 8, shadow: false });
+      k.cyl(pivot, { top: 0.1, bottom: 0.1, h: 0.03, tess: 8 }, k.mat('#ffd24a'), [0, -0.12, 0], undefined, { shadow: false });
+      k.decor(pivot);
+      lanterns.push(pivot);
+    }
+  };
+  house(0.0, 4.3, 0.15, 1, '#1aa88a', 2);
+  house(3.3, -3.0, -0.5, 0.85, '#e8443a', 1);
+  house(-2.2, -3.6, 0.45, 0.8, '#2a8ad8', 1);
+
+  // Senderito de piedras que une la aldea
+  for (let i = 0; i < 8; i++) {
+    const t = i / 7;
+    const x = -1.6 + t * 4.2 + Math.sin(t * 3) * 0.3;
+    const z = -3.2 + Math.sin(t * Math.PI) * 0.9;
+    k.cyl(details, { top: 0.42, bottom: 0.46, h: 0.06, tess: 7 }, k.mat('#efe4c8'), [x, 0.33, z], undefined, { flat: true, shadow: false });
+  }
+
+  // ---- Muelle ----
+  const wood = k.mat('#b07a48');
   k.box(details, [0.8, 0.1, 2.0], wood, [1.2, 0.42, 2.6], [0, 0.3, 0]);
   for (const [x, z] of [[0.9, 2.0], [1.5, 2.0], [0.9, 3.4], [1.5, 3.4]] as const) k.cyl(details, { top: 0.08, bottom: 0.08, h: 0.5 }, wood, [x, 0.25, z]);
-  for (const [x, z, s] of [[-4.0, -0.6, 1], [3.6, -2.8, 0.9], [-3.2, 3.2, 0.8], [0.6, -4.2, 0.7]] as const) {
-    k.cyl(details, { top: 0.18, bottom: 0.28, h: 1.4 * s, tess: 6 }, k.mat('#7a5a3a'), [x, 0.3 + 0.7 * s, z], undefined, { flat: true });
-    k.cluster(details, [x, 0.3 + 1.6 * s, z], 0.9 * s, 3, ['#4a9a5a', '#6ab86a'], { flat: true });
+
+  // ---- Árboles: cerezos en flor, árboles redondos y bambú ----
+  const swaying: { node: TransformNode; phase: number }[] = [];
+  const tree = (x: number, z: number, s: number, colors: string[], parent: TransformNode = details, y = 0.3) => {
+    const g = k.group('arbol', parent, [x, y, z]);
+    k.cyl(g, { top: 0.16 * s, bottom: 0.28 * s, h: 1.3 * s, tess: 6 }, k.mat('#6a4030'), [0, 0.65 * s, 0], undefined, { flat: true });
+    k.cyl(g, { top: 0.05, bottom: 0.1, h: 0.7 * s, tess: 5 }, k.mat('#6a4030'), [0.25 * s, 1.2 * s, 0], [0, 0, -0.7], { flat: true });
+    k.cluster(g, [0, 1.6 * s, 0], 0.95 * s, 5, colors, { flat: true });
+    swaying.push({ node: g, phase: x + z });
+    return g;
+  };
+  const blossom = ['#ff8ac0', '#ffb0d8', '#ff6aa8', '#ffd0e8'];
+  tree(2.0, -3.9, 0.8, blossom);
+  tree(-0.2, 3.0, 0.9, blossom);
+  tree(4.9, -1.6, 0.75, ['#3cc85a', '#7ad85a', '#2aa84a']);
+  tree(4.3, 3.3, 0.7, blossom);
+  const bamboo = (x: number, z: number) => {
+    const g = k.group('bambu', details, [x, 0.3, z]);
+    for (let i = 0; i < 5; i++) {
+      const h = k.range(1.6, 2.6);
+      const bx = k.range(-0.3, 0.3);
+      const bz = k.range(-0.3, 0.3);
+      k.cyl(g, { top: 0.07, bottom: 0.08, h, tess: 6 }, k.mat(k.pick(['#7ad84a', '#5ac24a'])), [bx, h / 2, bz]);
+      k.sphere(g, [0.5, 0.18, 0.3], k.mat('#3cb84a'), [bx + 0.15, h - 0.1, bz], { seg: 5, flat: true, shadow: false });
+    }
+    swaying.push({ node: g, phase: x * 2 });
+  };
+  bamboo(-1.2, 4.6);
+  bamboo(-4.4, 2.3);
+  bamboo(1.2, 4.7);
+
+  // Flores y hierbas de colores vivos (fuera de las zonas ocupadas)
+  const flowerColors = ['#ff4a6a', '#ffd23a', '#ff8a2a', '#c04aff', '#ffffff', '#ff6ad0'];
+  for (let i = 0, n = 0; i < 80 && n < 30; i++) {
+    const a = k.range(0, Math.PI * 2);
+    const r = k.range(1.2, 5.1);
+    const x = Math.cos(a) * r;
+    const z = Math.sin(a) * r;
+    if (!free(x, z)) continue;
+    n++;
+    k.cyl(details, { top: 0.02, bottom: 0.02, h: 0.18, tess: 4 }, k.mat('#3a9a3a'), [x, 0.39, z], undefined, { shadow: false });
+    k.sphere(details, [0.16, 0.12, 0.16], k.mat(k.pick(flowerColors)), [x, 0.5, z], { seg: 6, shadow: false });
   }
   for (let i = 0; i < 14; i++) {
     const a = k.range(0, Math.PI * 2);
     const r = k.range(1.5, 5.2);
-    k.sphere(details, [0.14, 0.14, 0.14], k.mat(k.pick(['#ffe0f0', '#fff4a0', '#ffffff'])), [Math.cos(a) * r, 0.36, Math.sin(a) * r], { seg: 6, shadow: false });
+    const x = Math.cos(a) * r;
+    const z = Math.sin(a) * r;
+    if (!free(x, z)) continue;
+    k.cyl(details, { top: 0, bottom: 0.3, h: 0.32, tess: 5 }, k.mat('#3ab84a'), [x, 0.46, z], undefined, { flat: true, shadow: false });
   }
-  // Islotes flotantes
-  for (const [x, y, z, s] of [[6.6, 1.6, -2.0, 1], [-6.8, 2.6, 2.4, 0.7], [-2.8, 4.8, -6.4, 0.6]] as const) {
+
+  // ---- Islotes flotantes (uno con un pabellón y otro con un cerezo) ----
+  for (const [x, y, z, s, kind] of [[6.6, 1.6, -2.0, 1, 0], [-6.8, 2.6, 2.4, 0.7, 1], [-2.8, 4.8, -6.4, 0.6, 2]] as const) {
     const g = k.group('islote', details, [x, y, z]);
-    k.cyl(g, { top: 2.2 * s, bottom: 0.2, h: 1.8 * s, tess: 7 }, k.mat('#7a6a5a'), [0, 0, 0], undefined, { flat: true });
-    k.cyl(g, { top: 2.3 * s, bottom: 2.2 * s, h: 0.22, tess: 7 }, k.mat('#6ab06a'), [0, 0.95 * s, 0], undefined, { flat: true });
+    k.cyl(g, { top: 2.2 * s, bottom: 0.2, h: 1.8 * s, tess: 7 }, k.mat('#c07a4a'), [0, 0, 0], undefined, { flat: true });
+    k.cyl(g, { top: 2.3 * s, bottom: 2.2 * s, h: 0.22, tess: 7 }, k.mat('#5cc85a'), [0, 0.95 * s, 0], undefined, { flat: true });
+    if (kind === 1) {
+      // Pabellón: cuatro columnas rojas y techo de jade
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) k.cyl(g, { top: 0.07, bottom: 0.07, h: 0.8, tess: 6 }, k.mat('#d8342a'), [sx * 0.4, 1.45 * s + 0.1, sz * 0.4]);
+      k.cyl(g, { top: 0.15, bottom: 1.5, h: 0.4, tess: 6 }, k.mat('#1aa88a'), [0, 1.45 * s + 0.65, 0], undefined, { flat: true });
+      k.cyl(g, { top: 0, bottom: 0.1, h: 0.25, tess: 5 }, k.mat('#ffd24a'), [0, 1.45 * s + 0.95, 0]);
+    }
+    if (kind === 2) tree(0, 0, 0.6, blossom, g, 1.05 * s);
     floaters.push(g);
   }
 
@@ -552,6 +687,23 @@ const isla: Builder = (k) => {
     gravity: [0, -6, 0],
     additive: false,
   });
+  // Pétalos de cerezo que vuelan con el viento
+  k.particles({
+    name: 'petalos',
+    capacity: 160,
+    min: [-5, 1.5, -5],
+    max: [5, 3.5, 5],
+    colors: ['#ffb0d8', '#ffe0f0'],
+    alpha: 0.9,
+    size: [0.08, 0.16],
+    life: [5, 8],
+    rate: 16,
+    power: [0.2, 0.5],
+    dir1: [0.4, -0.2, 0.1],
+    dir2: [1, -0.05, 0.4],
+    gravity: [0, -0.12, 0],
+    additive: false,
+  });
   // Ondas en el lago
   const ripples = [0, 1].map((i) => {
     const mat = k.mat(i ? '#e8f8ff' : '#e8f8fe', { alpha: 0.99, emissive: 0.4 });
@@ -559,6 +711,24 @@ const isla: Builder = (k) => {
     ring.isPickable = false;
     return { ring, mat, offset: i * 0.5 };
   });
+  // Peces koi que saltan del lago
+  const kois = [0, 1].map((i) => {
+    const g = k.group('koi', relief, [2.2, 0.37, 1.0]);
+    const body = k.group('cuerpo', g);
+    k.sphere(body, [0.14, 0.12, 0.38], k.mat(i ? '#ff7a2a' : '#fff4ec'), [0, 0, 0], { seg: 8, shadow: false });
+    k.sphere(body, [0.08, 0.07, 0.12], k.mat(i ? '#fff4ec' : '#ff5a2a'), [0, 0.04, 0.02], { seg: 6, shadow: false });
+    k.box(body, [0.02, 0.14, 0.14], k.mat('#ff9a4a'), [0, 0, -0.22], undefined, { shadow: false });
+    k.decor(g);
+    g.setEnabled(false);
+    return { g, body, offset: i * 2.3, angle: i * 2.1 };
+  });
+  // Cometa roja sobre la aldea
+  const kite = k.group('cometa', details, [0.6, 7, 3.4]);
+  k.box(kite, [0.9, 0.9, 0.04], k.mat('#ff3a3a', { emissive: 0.2 }), [0, 0, 0], [0, 0, Math.PI / 4], { shadow: false });
+  k.box(kite, [0.5, 0.5, 0.05], k.mat('#ffd23a'), [0, 0, 0], [0, 0, Math.PI / 4], { shadow: false });
+  const tail = [0, 1, 2, 3].map((i) => k.box(kite, [0.14, 0.1, 0.03], k.mat(i % 2 ? '#ffd23a' : '#ff3a3a'), [0, -0.75 - i * 0.28, 0], undefined, { shadow: false }));
+  k.decor(kite);
+
   // Gaviotas, nubes que rodean la isla y un velero en el mar
   const gulls = [0, 1, 2].map(() => k.bird(details, '#f4f4f0', 1.3));
   const clouds = [0, 1, 2, 3].map((i) => {
@@ -568,16 +738,43 @@ const isla: Builder = (k) => {
     return { g, a: (i / 4) * Math.PI * 2, y: 6 + (i % 2) * 1.5 };
   });
   const boat = k.group('velero', island);
-  k.box(boat, [2.4, 0.6, 0.9], k.mat('#8a5a3a'), [0, 0, 0]);
+  k.box(boat, [2.4, 0.6, 0.9], k.mat('#b05a3a'), [0, 0, 0]);
   k.cyl(boat, { top: 0.08, bottom: 0.08, h: 2.6 }, k.mat('#5a3a2a'), [0, 1.5, 0]);
-  k.box(boat, [0.05, 2.0, 1.3], k.mat('#fff8f0'), [0.5, 1.6, 0]);
+  k.box(boat, [0.05, 2.0, 1.3], k.mat('#ff6a4a'), [0.5, 1.6, 0]);
   k.decor(boat);
+  const lanternBase = lanternMat.emissiveColor.clone();
   k.onFrame((t) => {
+    for (const { node, phase } of swaying) {
+      node.rotation.z = Math.sin(t * 0.9 + phase) * 0.035;
+      node.rotation.x = Math.cos(t * 0.7 + phase) * 0.02;
+    }
+    lanterns.forEach((l, i) => {
+      l.rotation.x = Math.sin(t * 1.6 + i * 1.3) * 0.16;
+      l.rotation.z = Math.sin(t * 1.2 + i) * 0.08;
+    });
+    lanternMat.emissiveColor = lanternBase.scale(0.85 + 0.15 * Math.sin(t * 5) * Math.sin(t * 1.7));
     for (const r of ripples) {
       const p = ((t * 0.35 + r.offset) % 1 + 1) % 1;
       r.ring.scaling.setAll(0.4 + p * 3.2);
       r.mat.alpha = 0.6 * (1 - p);
     }
+    for (const f of kois) {
+      // Cada 4.6 s un salto corto en arco
+      const cycle = (t + f.offset) / 4.6;
+      const p = (cycle % 1) * 4.6 / 1.1;
+      const visible = p < 1;
+      f.g.setEnabled(visible);
+      if (visible) {
+        const a = f.angle + Math.floor(cycle) * 2.4;
+        const along = (p - 0.5) * 1.1;
+        f.g.position.set(2.2 + Math.cos(a) * 0.6 + Math.sin(a) * along, 0.37 + Math.sin(p * Math.PI) * 0.75, 1.0 + Math.sin(a) * 0.6 - Math.cos(a) * along);
+        f.g.rotation.y = a + Math.PI / 2;
+        f.body.rotation.x = (p - 0.5) * 2.2;
+      }
+    }
+    kite.position.set(0.6 + Math.sin(t * 0.4) * 0.8, 7 + Math.sin(t * 0.7) * 0.4, 3.4 + Math.cos(t * 0.3) * 0.4);
+    kite.rotation.z = Math.sin(t * 0.9) * 0.2;
+    tail.forEach((b, i) => (b.position.x = Math.sin(t * 2.4 - i * 0.8) * 0.12 * (i + 1)));
     gulls.forEach((b, i) => {
       const a = -t * 0.3 + i * 2.1;
       const rad = 8 + i * 0.8;
@@ -598,7 +795,7 @@ const isla: Builder = (k) => {
   return {
     root: k.root,
     stages: [island, relief, details],
-    accentSlots: [[3.6, 0.3, -1.0], [-3.8, 0.3, 0.8], [0.4, 0.3, -2.6], [-1.6, 0.3, 3.6], [4.4, 0.3, 0.4], [2.6, 0.3, -3.4], [-4.2, 0.3, -2.4], [0.0, 0.3, 4.2]],
+    accentSlots: [[1.0, 0.3, -2.4], [-1.0, 0.3, -2.0], [2.4, 0.3, -2.0], [4.7, 0.3, 0.6], [-2.8, 0.3, -2.2], [1.7, 0.3, 4.5], [3.0, 0.3, 3.8], [-0.6, 0.3, -4.0]],
     floaters,
   };
 };
