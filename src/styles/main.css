@@ -1,0 +1,459 @@
+:root {
+  --ink: rgba(244, 236, 226, 0.88);
+  --ink-soft: rgba(244, 236, 226, 0.55);
+  --glow: rgba(255, 214, 170, 0.9);
+  --bg: #09080f;
+  --cream: #f3e6c8;
+  --serif: 'Cormorant Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--serif);
+}
+
+#render-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  touch-action: none;
+}
+
+#ui-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Todos los elementos aparecen y desaparecen con fundido */
+#ui-root > * {
+  position: absolute;
+  opacity: 0;
+  transition: opacity 1.4s var(--ease), transform 1.4s var(--ease);
+}
+
+#ui-root > .is-visible {
+  opacity: 1;
+}
+
+.ui-hint {
+  top: 12vh;
+  left: 50%;
+  transform: translate(-50%, -6px);
+  font-size: clamp(1.1rem, 2vw, 1.6rem);
+  font-style: italic;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 24px rgba(255, 200, 160, 0.35);
+}
+
+.ui-hint.is-visible {
+  transform: translate(-50%, 0);
+}
+
+.ui-label {
+  bottom: 14vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+  letter-spacing: 0.18em;
+  text-transform: lowercase;
+  color: var(--ink-soft);
+  transition-duration: 0.5s;
+}
+
+.ui-dots {
+  bottom: 6vh;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 14px;
+}
+
+.ui-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--ink-soft);
+  transition: background 0.8s var(--ease), box-shadow 0.8s var(--ease), border-color 0.8s;
+}
+
+.ui-dots span.is-filled {
+  background: var(--glow);
+  border-color: var(--glow);
+  box-shadow: 0 0 10px var(--glow);
+}
+
+.ui-continue {
+  right: 5vw;
+  bottom: 5.4vh;
+  padding: 0.4em 0.2em;
+  background: none;
+  border: none;
+  border-bottom: 1px solid transparent;
+  color: var(--ink-soft);
+  font: italic clamp(0.95rem, 1.3vw, 1.1rem) var(--serif);
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+.ui-continue.is-visible {
+  pointer-events: auto;
+}
+
+.ui-continue:hover,
+.ui-continue:focus-visible {
+  color: var(--ink);
+  border-bottom-color: var(--ink-soft);
+  outline: none;
+}
+
+.ui-message {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  font-style: italic;
+  text-align: center;
+}
+
+.ui-debug {
+  top: 12px;
+  left: 12px;
+  max-height: 80vh;
+  max-width: 320px;
+  overflow: auto;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  font: 11px/1.4 ui-monospace, Consolas, monospace;
+  color: #b8f0c8;
+  transition-duration: 0.2s;
+}
+
+.ui-debug.is-visible {
+  pointer-events: auto;
+}
+
+/* Pantalla inicial: también es el gesto que habilita el audio */
+.ui-intro {
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6rem;
+  background: #000;
+  border: none;
+  color: var(--ink);
+  font-family: var(--serif);
+  cursor: pointer;
+  transition-duration: 2.2s;
+}
+
+.ui-intro.is-visible {
+  pointer-events: auto;
+}
+
+.ui-intro-title {
+  font-size: clamp(1.6rem, 3.4vw, 2.8rem);
+  font-weight: 300;
+  letter-spacing: 0.08em;
+}
+
+.ui-intro-cta {
+  font-size: clamp(0.85rem, 1.2vw, 1rem);
+  font-style: italic;
+  letter-spacing: 0.2em;
+  color: var(--ink-soft);
+  animation: breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+/* Destello de la explosión */
+.ui-flash {
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, #fffaf0 0%, #ffd9b0 45%, rgba(255, 190, 140, 0.6) 100%);
+  transition: none;
+}
+
+#ui-root > .ui-flash.is-visible {
+  opacity: 1;
+  transition: none;
+}
+
+#ui-root > .ui-flash.is-fading {
+  transition: opacity 4.5s cubic-bezier(0.25, 0.6, 0.3, 1);
+}
+
+
+/* ---------- Cinta cinematográfica ---------- */
+
+/* Flechas retro: insignia de doble aro, como las señales de los cines antiguos */
+.ui-nav {
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem;
+  background: none;
+  border: none;
+  color: var(--cream);
+  font-family: var(--serif);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.ui-nav-prev {
+  left: max(16px, 2.6vw);
+}
+
+.ui-nav-next {
+  right: max(16px, 2.6vw);
+}
+
+#ui-root > .ui-nav.is-visible {
+  opacity: 0.82;
+  pointer-events: auto;
+}
+
+#ui-root > .ui-nav.is-visible:hover,
+#ui-root > .ui-nav.is-visible:focus-visible {
+  opacity: 1;
+  outline: none;
+}
+
+#ui-root > .ui-nav.is-visible:disabled {
+  opacity: 0.18;
+  cursor: default;
+}
+
+.ui-nav-ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(48px, 5vw, 64px);
+  aspect-ratio: 1;
+  border: 2px solid var(--cream);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 4px rgba(10, 8, 15, 0.55),
+    0 0 0 5.5px var(--cream),
+    0 0 22px rgba(255, 214, 160, 0.25);
+  background: radial-gradient(circle at 50% 40%, rgba(255, 226, 180, 0.16), rgba(20, 14, 10, 0.55));
+  transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
+}
+
+.ui-nav-ring svg {
+  width: 52%;
+  height: 52%;
+  fill: none;
+  stroke: var(--cream);
+  stroke-width: 4.5;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+.ui-nav:not(:disabled):hover .ui-nav-ring {
+  transform: scale(1.06);
+  box-shadow:
+    0 0 0 4px rgba(10, 8, 15, 0.55),
+    0 0 0 5.5px var(--cream),
+    0 0 34px rgba(255, 214, 160, 0.55);
+  animation: projector 0.28s steps(2) infinite;
+}
+
+.ui-nav-prev:not(:disabled):hover svg {
+  transform: translateX(-2px);
+}
+
+.ui-nav-next:not(:disabled):hover svg {
+  transform: translateX(2px);
+}
+
+.ui-nav-label {
+  font-size: 0.78rem;
+  font-variant: small-caps;
+  letter-spacing: 0.28em;
+  text-transform: lowercase;
+  color: var(--cream);
+  opacity: 0.75;
+}
+
+/* Parpadeo leve, como la luz de un proyector */
+@keyframes projector {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.18); }
+}
+
+/* Intertítulo del fotograma */
+.ui-caption {
+  bottom: max(18px, 5vh);
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: calc(100vw - 32px);
+  transform: translate(-50%, 6px);
+  color: var(--cream);
+  text-align: center;
+  transition-duration: 0.9s;
+}
+
+.ui-caption.is-visible {
+  transform: translate(-50%, 0);
+}
+
+.ui-caption-num {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.4em;
+  opacity: 0.7;
+}
+
+.ui-caption-num::before,
+.ui-caption-num::after {
+  content: '';
+  width: 2.4rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.ui-caption-title {
+  font-size: clamp(1.05rem, 1.8vw, 1.45rem);
+  font-style: italic;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 18px rgba(0, 0, 0, 0.8);
+}
+
+@media (max-width: 640px) {
+  .ui-nav-label {
+    display: none;
+  }
+}
+
+/* ---------- Diorama: herramientas ---------- */
+
+.ui-tools {
+  right: max(16px, 3vw);
+  bottom: max(16px, 4.5vh);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.8rem 1rem 0.9rem;
+  border: 1.5px solid var(--cream);
+  border-radius: 26px;
+  box-shadow: 0 0 0 3px rgba(10, 8, 15, 0.35), 0 0 0 4px rgba(243, 230, 200, 0.35);
+  background: rgba(20, 16, 24, 0.55);
+  backdrop-filter: blur(6px);
+  color: var(--cream);
+  transform: translateY(8px);
+  transition-duration: 0.5s;
+}
+
+#ui-root > .ui-tools.is-visible {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.ui-tools-name {
+  font-size: 0.82rem;
+  font-variant: small-caps;
+  letter-spacing: 0.22em;
+  text-transform: lowercase;
+  opacity: 0.85;
+}
+
+.ui-tools-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.ui-tools-row button {
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid var(--cream);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, rgba(255, 226, 180, 0.18), rgba(20, 14, 10, 0.5));
+  color: var(--cream);
+  font: 1.15rem/1 var(--serif);
+  cursor: pointer;
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+}
+
+.ui-tools-row button:hover,
+.ui-tools-row button:focus-visible {
+  transform: scale(1.08);
+  box-shadow: 0 0 16px rgba(255, 214, 160, 0.5);
+  outline: none;
+}
+
+.ui-tools-sep {
+  width: 1px;
+  height: 22px;
+  margin: 0 0.15rem;
+  background: var(--cream);
+  opacity: 0.4;
+}
+
+.ui-reset {
+  left: max(16px, 3vw);
+  bottom: max(16px, 4.5vh);
+  padding: 0.55em 1.2em;
+  border: 1.5px solid var(--cream);
+  border-radius: 999px;
+  background: rgba(20, 16, 24, 0.45);
+  color: var(--cream);
+  font: italic 0.95rem var(--serif);
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+
+#ui-root > .ui-reset.is-visible {
+  opacity: 0.8;
+  pointer-events: auto;
+}
+
+#ui-root > .ui-reset.is-visible:hover {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .ui-tools {
+    right: 50%;
+    bottom: calc(max(16px, 4.5vh) + 64px);
+    transform: translate(50%, 8px);
+  }
+  #ui-root > .ui-tools.is-visible {
+    transform: translate(50%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #ui-root > * {
+    transition-duration: 0.01s;
+  }
+}
